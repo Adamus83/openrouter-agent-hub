@@ -1,34 +1,76 @@
+"use client";
+
+import { useState } from "react";
+
 export default function Home() {
+  const [message, setMessage] = useState("");
+  const [reply, setReply] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function sendMessage() {
+    const apiKey = localStorage.getItem("openrouter_api_key");
+
+    if (!apiKey) {
+      alert("Silakan isi API Key di halaman Settings.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          apiKey,
+          message,
+          model: "deepseek/deepseek-chat",
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        setReply(data.error);
+      } else {
+        setReply(data.reply);
+      }
+    } catch (e) {
+      setReply("Terjadi kesalahan.");
+    }
+
+    setLoading(false);
+  }
+
   return (
-    <main style={{
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      alignItems: "center",
-      minHeight: "100vh",
-      fontFamily: "sans-serif",
-      padding: "20px",
-      textAlign: "center"
-    }}>
+    <main style={{ padding: 20 }}>
       <h1>🚀 OpenRouter Agent Hub</h1>
 
-      <p>Powered by OpenRouter</p>
+      <textarea
+        rows={6}
+        style={{ width: "100%", marginTop: 20 }}
+        placeholder="Tulis pertanyaan..."
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+      />
 
       <button
+        onClick={sendMessage}
+        style={{ marginTop: 20 }}
+      >
+        {loading ? "Mengirim..." : "Kirim"}
+      </button>
+
+      <pre
         style={{
-          marginTop: "20px",
-          padding: "12px 24px",
-          borderRadius: "10px",
-          border: "none",
-          background: "#2563eb",
-          color: "white",
-          fontSize: "18px"
+          marginTop: 30,
+          whiteSpace: "pre-wrap",
         }}
       >
-        Start Chat
-      </button>
+        {reply}
+      </pre>
     </main>
   );
 }
-
-
